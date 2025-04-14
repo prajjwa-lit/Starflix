@@ -8,59 +8,61 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
-	"DevMaan707/streamer/models"
+	"DevMaan707/streamer/db"
 	"DevMaan707/streamer/utils"
 )
 
 // VideoService handles video-related operations
 type VideoService struct {
-	videoDir    string
-	videos      []models.Video
-	videosMutex sync.RWMutex
-	lastUpdate  time.Time
+	videoDir   string
+	coverDir   string
+	lastUpdate time.Time
 }
 
 // NewVideoService creates a new video service
-func NewVideoService(videoDir string) (*VideoService, error) {
+func NewVideoService(videoDir string, coverDir string) (*VideoService, error) {
 	svc := &VideoService{
 		videoDir: videoDir,
+		coverDir: coverDir,
 	}
-
-	// Initialize video list
-	_, err := svc.ListVideos(true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize video list: %w", err)
-	}
-
-	// Start periodic updates
-	go svc.periodicUpdate()
 
 	return svc, nil
 }
 
 // ListVideos returns the list of videos
-func (s *VideoService) ListVideos(refresh bool) ([]models.Video, error) {
-	// If refresh requested or first load, update the list
-	if refresh || time.Since(s.lastUpdate) > 5*time.Minute {
-		if err := s.updateVideoList(); err != nil {
-			return nil, err
-		}
+func (s *VideoService) ListVideos() ([]db.Video, error) {
+	// Get videos from database
+	videos, err := db.GetAllVideos()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve videos: %w", err)
 	}
-
-	// Return the cached list
-	s.videosMutex.RLock()
-	defer s.videosMutex.RUnlock()
-
-	// Return a copy to prevent external modification
-	videos := make([]models.Video, len(s.videos))
-	copy(videos, s.videos)
 
 	return videos, nil
 }
 
+// ListVideosByGenre returns videos filtered by genre
+func (s *VideoService) ListVideosByGenre(genre string) ([]db.Video, error) {
+	videos, err := db.GetVideosByGenre(genre)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve videos: %w", err)
+	}
+
+	return videos, nil
+}
+
+// GetGenres returns all available genres
+func (s *VideoService) GetGenres() ([]db.Genre, error) {
+	genres, err := db.GetAllGenres()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve genres: %w", err)
+	}
+
+	return genres, nil
+}
+
+// StreamVideo streams a video file
 func (s *VideoService) StreamVideo(w http.ResponseWriter, r *http.Request, path string) error {
 	// Validate and clean the path
 	fullPath := filepath.Join(s.videoDir, filepath.Clean(path))
@@ -136,58 +138,46 @@ func (s *VideoService) StreamVideo(w http.ResponseWriter, r *http.Request, path 
 	return err
 }
 
-// updateVideoList refreshes the list of available videos
-func (s *VideoService) updateVideoList() error {
-	var videos []models.Video
-
-	err := filepath.Walk(s.videoDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Skip directories
-		if info.IsDir() {
-			return nil
-		}
-
-		// Check if it's a video file based on extension
-		if utils.IsVideoFile(path) {
-			relPath, err := filepath.Rel(s.videoDir, path)
-			if err != nil {
-				return err
-			}
-
-			videos = append(videos, models.Video{
-				Name: info.Name(),
-				Path: relPath,
-				Size: info.Size(),
-			})
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return err
+// GetCoverImage returns the path to a cover image
+func (s *VideoService) GetCoverImagePath(coverFilename string) string {
+	if coverFilename == "" {
+		return ""
 	}
-
-	// Update the videos list in a thread-safe way
-	s.videosMutex.Lock()
-	s.videos = videos
-	s.lastUpdate = time.Now()
-	s.videosMutex.Unlock()
-
-	return nil
+	return filepath.Join(s.coverDir, coverFilename)
 }
 
-// periodicUpdate refreshes the video list periodically
-func (s *VideoService) periodicUpdate() {
-	ticker := time.NewTicker(5 * time.Minute)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		if err := s.updateVideoList(); err != nil {
-			fmt.Printf("Error updating video list: %v\n", err)
-		}
+// ServeCoverImage serves a cover image file
+func (s *VideoService) ServeCoverImage(w http.ResponseWriter, r *http.Request, filename string) error {
+	if filename == "" {
+		return utils.ErrNotFound
 	}
+
+	// Validate and clean the path
+	fullPath := filepath.Join(s.coverDir, filepath.Clean(filename))
+
+	// Ensure the path doesn't try to navigate outside the covers directory
+	if !strings.HasPrefix(fullPath, s.coverDir) {
+		return utils.ErrInvalidPath
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		return utils.ErrNotFound
+	}
+
+	// Set proper content type
+	contentType := "image/jpeg" // default
+	if strings.HasSuffix(filename, ".png") {
+		contentType = "image/png"
+	} else if strings.HasSuffix(filename, ".gif") {
+		contentType = "image/gif"
+	} else if strings.HasSuffix(filename, ".webp") {
+		contentType = "image/webp"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+
+	// Serve the file
+	http.ServeFile(w, r, fullPath)
+	return nil
 }

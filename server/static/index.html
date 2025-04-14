@@ -3,15 +3,21 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Video Streamer</title>
+        <title>StreamFlix - Your Personal Video Platform</title>
         <link rel="stylesheet" href="style.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
     </head>
     <body>
         <div class="container">
             <header>
-                <h1>Video Streamer</h1>
+                <div class="logo">
+                    <h1>STREAMFLIX</h1>
+                </div>
                 <div class="tabs">
-                    <button id="videos-tab" class="tab active">Videos</button>
+                    <button id="videos-tab" class="tab active">Browse</button>
                     <button id="upload-tab" class="tab">Upload</button>
                 </div>
             </header>
@@ -19,55 +25,282 @@
             <main>
                 <!-- Videos Page -->
                 <div id="videos-page" class="page active">
-                    <div id="video-list" class="video-list">
-                        <div class="loading">Loading videos...</div>
+                    <!-- Top featured video -->
+                    <div id="featured-section" class="featured-section hidden">
+                        <div class="featured-content">
+                            <h2 id="featured-title" class="featured-title">
+                                Movie Title
+                            </h2>
+                            <p
+                                id="featured-description"
+                                class="featured-description"
+                            >
+                                Description will appear here...
+                            </p>
+                            <div class="featured-buttons">
+                                <button
+                                    id="featured-play"
+                                    class="btn btn-primary"
+                                >
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"></path>
+                                    </svg>
+                                    Play
+                                </button>
+                                <button
+                                    id="featured-info"
+                                    class="btn btn-secondary"
+                                >
+                                    <svg viewBox="0 0 24 24">
+                                        <path
+                                            d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"
+                                        ></path>
+                                    </svg>
+                                    More Info
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
+                    <!-- Genre navigation -->
+                    <div id="genre-nav" class="genre-nav">
+                        <button class="genre-btn active" data-genre="all">
+                            All
+                        </button>
+                        <!-- Genres will be added here dynamically -->
+                    </div>
+
+                    <!-- Videos by category -->
+                    <div id="video-categories">
+                        <!-- Categories will be populated dynamically -->
+                    </div>
+
+                    <!-- Loading state -->
+                    <div id="loading-indicator" class="loading">
+                        <div class="spinner"></div>
+                        <span>Discovering content...</span>
+                    </div>
+
+                    <!-- Video player -->
                     <div id="video-player" class="video-player hidden">
                         <div class="player-header">
-                            <button id="back-button">← Back</button>
+                            <button id="back-button">
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+                                    ></path>
+                                </svg>
+                            </button>
                             <h2 id="video-title"></h2>
                         </div>
                         <video id="player" controls>
                             Your browser doesn't support video playback.
                         </video>
+                        <div id="video-details" class="video-details">
+                            <!-- Video details will be populated here -->
+                        </div>
                     </div>
                 </div>
 
                 <!-- Upload Page -->
                 <div id="upload-page" class="page">
                     <div class="upload-container">
-                        <h2>Upload Video</h2>
+                        <h2>Add to Your Collection</h2>
                         <form id="upload-form" enctype="multipart/form-data">
-                            <div class="drop-area" id="drop-area">
-                                <p>Drag & drop files here or click to select</p>
-                                <input
-                                    type="file"
-                                    id="file-input"
-                                    name="file"
-                                    accept="video/*"
-                                />
-                            </div>
-                            <div class="file-info hidden" id="file-info">
-                                <p id="selected-file">No file selected</p>
-                                <div
-                                    class="progress-container hidden"
-                                    id="progress-container"
-                                >
+                            <div class="upload-grid">
+                                <div class="upload-left">
+                                    <div class="drop-area" id="drop-area">
+                                        <svg viewBox="0 0 24 24">
+                                            <path
+                                                d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"
+                                            ></path>
+                                        </svg>
+                                        <p>Drag & drop video file here</p>
+                                        <p class="subtitle">
+                                            Support for MP4, WebM, TS and other
+                                            video formats
+                                        </p>
+                                        <input
+                                            type="file"
+                                            id="file-input"
+                                            name="file"
+                                            accept="video/*"
+                                        />
+                                    </div>
                                     <div
-                                        class="progress-bar"
-                                        id="progress-bar"
-                                    ></div>
+                                        class="file-info hidden"
+                                        id="file-info"
+                                    >
+                                        <p id="selected-file">
+                                            No file selected
+                                        </p>
+                                        <div
+                                            class="progress-container hidden"
+                                            id="progress-container"
+                                        >
+                                            <div
+                                                class="progress-bar"
+                                                id="progress-bar"
+                                            ></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="upload-right">
+                                    <div class="form-group">
+                                        <label for="title">Title</label>
+                                        <input
+                                            type="text"
+                                            id="title"
+                                            name="title"
+                                            placeholder="Movie title"
+                                        />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="description"
+                                            >Description</label
+                                        >
+                                        <textarea
+                                            id="description"
+                                            name="description"
+                                            rows="3"
+                                            placeholder="Movie description"
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="genre">Genre</label>
+                                            <select id="genre" name="genre">
+                                                <option value="">
+                                                    Select genre
+                                                </option>
+                                                <!-- Genres will be populated dynamically -->
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="release_year"
+                                                >Release Year</label
+                                            >
+                                            <input
+                                                type="number"
+                                                id="release_year"
+                                                name="release_year"
+                                                min="1900"
+                                                max="2099"
+                                                step="1"
+                                                placeholder="2023"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="cover_image"
+                                            >Cover Image</label
+                                        >
+                                        <div
+                                            class="cover-upload-area"
+                                            id="cover-upload-area"
+                                        >
+                                            <svg viewBox="0 0 24 24">
+                                                <path
+                                                    d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                                                ></path>
+                                            </svg>
+                                            <p>Click to upload cover image</p>
+                                            <input
+                                                type="file"
+                                                id="cover-input"
+                                                name="cover_image"
+                                                accept="image/*"
+                                            />
+                                        </div>
+                                        <p
+                                            id="selected-cover"
+                                            class="selected-file hidden"
+                                        >
+                                            No cover selected
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                            <button type="submit" id="upload-button">
-                                Upload
-                            </button>
+
+                            <div id="upload-actions" class="upload-actions">
+                                <button
+                                    type="submit"
+                                    id="upload-button"
+                                    class="btn-primary"
+                                >
+                                    Upload Video
+                                </button>
+                            </div>
                         </form>
                         <div id="upload-message" class="message"></div>
                     </div>
                 </div>
+
+                <!-- Movie Details Modal -->
+                <div id="movie-modal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 id="modal-title"></h2>
+                            <button id="modal-close" class="modal-close">
+                                &times;
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="modal-grid">
+                                <div class="modal-poster">
+                                    <img
+                                        id="modal-poster"
+                                        src=""
+                                        alt="Movie poster"
+                                    />
+                                </div>
+                                <div class="modal-info">
+                                    <p id="modal-description"></p>
+                                    <div class="modal-metadata">
+                                        <div class="meta-item">
+                                            <span class="meta-label"
+                                                >Genre:</span
+                                            >
+                                            <span id="modal-genre"></span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="meta-label"
+                                                >Year:</span
+                                            >
+                                            <span id="modal-year"></span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="meta-label"
+                                                >File Size:</span
+                                            >
+                                            <span id="modal-size"></span>
+                                        </div>
+                                    </div>
+                                    <div class="modal-actions">
+                                        <button
+                                            id="modal-play"
+                                            class="btn-primary"
+                                        >
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M8 5v14l11-7z"></path>
+                                            </svg>
+                                            Play
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
+
+            <footer>
+                <p>&copy; 2023 StreamFlix - Your Personal Video Platform</p>
+            </footer>
         </div>
         <script src="script.js"></script>
     </body>

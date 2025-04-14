@@ -25,12 +25,12 @@ type Server struct {
 // NewServer creates a new server instance
 func NewServer(cfg *config.Config) (*Server, error) {
 	// Create services
-	videoSvc, err := services.NewVideoService(cfg.VideoDir)
+	videoSvc, err := services.NewVideoService(cfg.VideoDir, cfg.CoverImageDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create video service: %w", err)
 	}
 
-	uploadSvc := services.NewUploadService(cfg.VideoDir, cfg.MaxUploadSizeBytes())
+	uploadSvc := services.NewUploadService(cfg.VideoDir, cfg.CoverImageDir, cfg.MaxUploadSizeBytes())
 
 	return &Server{
 		cfg:       cfg,

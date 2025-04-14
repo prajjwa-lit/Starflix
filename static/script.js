@@ -70,8 +70,8 @@ document.addEventListener("DOMContentLoaded", function () {
           videoItem.innerHTML = `
                         <div class="video-thumbnail">▶</div>
                         <div class="video-info">
-                            <div class="video-title">\${video.name}</div>
-                            <div class="video-size">\${formatFileSize(video.size)}</div>
+                            <div class="video-title">${video.name}</div>
+                            <div class="video-size">${formatFileSize(video.size)}</div>
                         </div>
                     `;
 
@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
             videoPlayer.classList.remove("hidden");
 
             // Set up video source
-            player.src = `/videos/\${encodeURIComponent(video.path)}`;
+            player.src = `/videos/${encodeURIComponent(video.path)}`;
             videoTitle.textContent = video.name;
 
             // Start playback
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch((error) => {
         console.error("Error:", error);
-        videoList.innerHTML = `<div class="loading error">Error loading videos: \${error.message}</div>`;
+        videoList.innerHTML = `<div class="loading error">Error loading videos: ${error.message}</div>`;
       });
   }
 
@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const file = fileInput.files[0];
     if (file) {
       fileInfo.classList.remove("hidden");
-      selectedFile.textContent = `Selected: \${file.name} (\${formatFileSize(file.size)})`;
+      selectedFile.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
     } else {
       fileInfo.classList.add("hidden");
     }
@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", function () {
       fileInput.files = e.dataTransfer.files;
       const file = fileInput.files[0];
       fileInfo.classList.remove("hidden");
-      selectedFile.textContent = `Selected: \${file.name} (\${formatFileSize(file.size)})`;
+      selectedFile.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
     }
   });
 

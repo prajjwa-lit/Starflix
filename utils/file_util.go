@@ -25,6 +25,17 @@ func IsVideoFile(path string) bool {
 	}
 }
 
+// IsImageFile checks if a file is an image based on extension
+func IsImageFile(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".gif", ".webp":
+		return true
+	default:
+		return false
+	}
+}
+
 // GetContentType returns the MIME type based on file extension
 func GetContentType(path string) string {
 	ext := strings.ToLower(filepath.Ext(path))
