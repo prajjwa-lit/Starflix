@@ -39,7 +39,6 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	}, nil
 }
 
-// Start begins the HTTP server
 func (s *Server) Start() error {
 	// Set up router with middlewares
 	mux := http.NewServeMux()
@@ -56,8 +55,11 @@ func (s *Server) Start() error {
 	// Serve static files
 	mux.Handle("/", http.FileServer(http.FS(staticFS)))
 
-	// Wrap with logging middleware
-	handler := LoggingMiddleware(mux)
+	// Apply middleware in correct order
+	// CORS middleware should be applied first
+	handler := CORSMiddleware(mux)
+	// Then apply logging middleware
+	handler = LoggingMiddleware(handler)
 
 	// Configure server with reasonable timeouts
 	server := &http.Server{

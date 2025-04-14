@@ -29,7 +29,7 @@ func expandPath(path string) string {
 func main() {
 	// Parse command line flags
 	cfg := config.NewConfig()
-	flag.IntVar(&cfg.Port, "port", 8080, "Port to serve on")
+	flag.IntVar(&cfg.Port, "port", 5101, "Port to serve on")
 	flag.StringVar(&cfg.VideoDir, "videos", "./videos", "Directory containing video files")
 	flag.StringVar(&cfg.CoverImageDir, "covers", "./covers", "Directory for video cover images")
 	flag.IntVar(&cfg.MaxUploadSize, "max-upload", 1024, "Maximum upload size in MB")

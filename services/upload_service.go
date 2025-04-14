@@ -41,18 +41,27 @@ func NewUploadService(uploadDir string, coverDir string, maxUploadSize int64) *U
 
 // HandleUpload processes a file upload from HTTP request
 func (s *UploadService) HandleUpload(r *http.Request) (string, error) {
+	log.Println("Starting file upload handling")
+
 	// Parse multipart form
+	log.Printf("Max upload size: %d bytes", s.maxUploadSize)
 	err := r.ParseMultipartForm(s.maxUploadSize)
 	if err != nil {
+		log.Printf("Failed to parse form: %v", err)
 		return "", fmt.Errorf("failed to parse form: %w", err)
 	}
 
 	// Get the video file from form data
+	log.Println("Getting file from form")
 	file, header, err := r.FormFile("file")
 	if err != nil {
+		log.Printf("Failed to get video file: %v", err)
 		return "", fmt.Errorf("failed to get video file: %w", err)
 	}
 	defer file.Close()
+
+	// Log file details
+	log.Printf("Received file: %s, size: %d bytes", header.Filename, header.Size)
 
 	// Limit file size
 	if header.Size > s.maxUploadSize {
