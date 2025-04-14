@@ -38,32 +38,57 @@ func NewUploadService(uploadDir string, coverDir string, maxUploadSize int64) *U
 		maxUploadSize: maxUploadSize,
 	}
 }
+func checkDirPermissions(dir string) error {
+	// Check if directory exists
+	info, err := os.Stat(dir)
+	if err != nil {
+		return fmt.Errorf("failed to stat directory: %w", err)
+	}
 
-// HandleUpload processes a file upload from HTTP request
+	// Check if it's a directory
+	if !info.IsDir() {
+		return fmt.Errorf("%s is not a directory", dir)
+	}
+
+	// Try to create a test file
+	testFile := filepath.Join(dir, ".test_write_permission")
+	f, err := os.Create(testFile)
+	if err != nil {
+		return fmt.Errorf("failed to write to directory: %w", err)
+	}
+	f.Close()
+	os.Remove(testFile)
+
+	return nil
+}
+
 func (s *UploadService) HandleUpload(r *http.Request) (string, error) {
 	log.Println("Starting file upload handling")
 
-	// Parse multipart form
-	log.Printf("Max upload size: %d bytes", s.maxUploadSize)
-	err := r.ParseMultipartForm(s.maxUploadSize)
-	if err != nil {
+	// Log request details
+	log.Printf("Content-Length: %d", r.ContentLength)
+	log.Printf("Transfer-Encoding: %v", r.TransferEncoding)
+	log.Printf("X-Forwarded-For: %v", r.Header.Get("X-Forwarded-For"))
+
+	// Use a larger parse size for Cloudflare
+	maxMemory := int64(32 << 20) // 32MB of memory for form parsing
+	if err := r.ParseMultipartForm(maxMemory); err != nil {
 		log.Printf("Failed to parse form: %v", err)
 		return "", fmt.Errorf("failed to parse form: %w", err)
 	}
 
-	// Get the video file from form data
-	log.Println("Getting file from form")
+	// Get the file
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		log.Printf("Failed to get video file: %v", err)
-		return "", fmt.Errorf("failed to get video file: %w", err)
+		log.Printf("Failed to get file: %v", err)
+		return "", fmt.Errorf("failed to get file: %w", err)
 	}
 	defer file.Close()
 
 	// Log file details
 	log.Printf("Received file: %s, size: %d bytes", header.Filename, header.Size)
 
-	// Limit file size
+	// Verify file size
 	if header.Size > s.maxUploadSize {
 		return "", fmt.Errorf("file too large (max %d bytes)", s.maxUploadSize)
 	}
@@ -74,23 +99,26 @@ func (s *UploadService) HandleUpload(r *http.Request) (string, error) {
 		return "", errors.New("only video files are allowed")
 	}
 
-	// Create safe filename
-	safeName := utils.SafeFilename(filename)
+	safeName := utils.SafeFilename(header.Filename)
 	filePath := filepath.Join(s.uploadDir, safeName)
 
-	// Create destination file
-	dst, err := os.Create(filePath)
+	// Create the file with explicit permissions
+	dst, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		return "", fmt.Errorf("failed to create destination file: %w", err)
+		log.Printf("Failed to create file: %v", err)
+		return "", fmt.Errorf("failed to create file: %w", err)
 	}
 	defer dst.Close()
 
-	// Copy the uploaded file to the destination file
-	_, err = io.Copy(dst, file)
+	// Copy the file in chunks
+	written, err := io.Copy(dst, file)
 	if err != nil {
+		log.Printf("Failed to save file: %v", err)
+		os.Remove(filePath) // Clean up on error
 		return "", fmt.Errorf("failed to save file: %w", err)
 	}
 
+	log.Printf("Successfully wrote %d bytes to %s", written, filePath)
 	// Now handle the metadata and cover image
 	title := r.FormValue("title")
 	if title == "" {

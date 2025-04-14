@@ -57,9 +57,10 @@ func (s *Server) Start() error {
 
 	// Apply middleware in correct order
 	// CORS middleware should be applied first
-	handler := CORSMiddleware(mux)
-	// Then apply logging middleware
+	handler := CloudflareMiddleware(mux)
+	handler = ErrorLoggingMiddleware(handler)
 	handler = LoggingMiddleware(handler)
+	handler = CORSMiddleware(handler)
 
 	// Configure server with reasonable timeouts
 	server := &http.Server{

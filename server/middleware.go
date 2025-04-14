@@ -6,6 +6,31 @@ import (
 	"time"
 )
 
+func CloudflareMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Allow larger uploads through Cloudflare
+		w.Header().Set("Transfer-Encoding", "chunked")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+
+		// Log Cloudflare headers for debugging
+		log.Printf("CF-RAY: %s", r.Header.Get("CF-RAY"))
+		log.Printf("CF-Connecting-IP: %s", r.Header.Get("CF-Connecting-IP"))
+		log.Printf("Content-Length: %s", r.Header.Get("Content-Length"))
+
+		next.ServeHTTP(w, r)
+	})
+}
+func ErrorLoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("Panic in request handler: %v", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
 func CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")

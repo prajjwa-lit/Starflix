@@ -569,43 +569,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (xhr.status === 200) {
         const response = JSON.parse(xhr.responseText);
-        uploadMessage.innerHTML = `
-          <strong>Success!</strong> Your video "${document.getElementById("title").value}" has been uploaded and is ready to stream.
-          <br><br>
-          <a href="#" id="view-video-link">View your video collection</a>
-        `;
+        uploadMessage.textContent = response.message;
         uploadMessage.className = "message success";
         uploadForm.reset();
         fileInfo.classList.add("hidden");
-        selectedCover.classList.add("hidden");
-        coverUploadArea.style.backgroundImage = "";
-        coverUploadArea.querySelector("svg").style.display = "block";
-        coverUploadArea.querySelector("p").style.display = "block";
-
-        // Add event listener to the link
-        document
-          .getElementById("view-video-link")
-          .addEventListener("click", (e) => {
-            e.preventDefault();
-            videosTab.click();
-          });
       } else {
+        let errorMessage = "Upload failed";
         try {
           const response = JSON.parse(xhr.responseText);
-          uploadMessage.textContent = response.message || "Upload failed";
+          errorMessage = `Upload failed: ${response.message || xhr.statusText}`;
         } catch (e) {
-          uploadMessage.textContent = "Upload failed";
+          errorMessage = `Upload failed: ${xhr.statusText}`;
         }
+        console.error("Upload error:", errorMessage);
+        uploadMessage.textContent = errorMessage;
         uploadMessage.className = "message error";
       }
     };
 
-    xhr.onerror = function () {
+    xhr.onerror = function (e) {
+      console.error("Network error:", e);
       progressContainer.classList.add("hidden");
-      uploadMessage.textContent = "Network error occurred";
+      uploadMessage.textContent = `Network error occurred: ${e.message || "Unknown error"}`;
       uploadMessage.className = "message error";
     };
-
     xhr.send(formData);
   });
 
