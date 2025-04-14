@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Video Streamer</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Video Streamer</h1>
+                <div class="tabs">
+                    <button id="videos-tab" class="tab active">Videos</button>
+                    <button id="upload-tab" class="tab">Upload</button>
+                </div>
+            </header>
+
+            <main>
+                <!-- Videos Page -->
+                <div id="videos-page" class="page active">
+                    <div id="video-list" class="video-list">
+                        <div class="loading">Loading videos...</div>
+                    </div>
+
+                    <div id="video-player" class="video-player hidden">
+                        <div class="player-header">
+                            <button id="back-button">← Back</button>
+                            <h2 id="video-title"></h2>
+                        </div>
+                        <video id="player" controls>
+                            Your browser doesn't support video playback.
+                        </video>
+                    </div>
+                </div>
+
+                <!-- Upload Page -->
+                <div id="upload-page" class="page">
+                    <div class="upload-container">
+                        <h2>Upload Video</h2>
+                        <form id="upload-form" enctype="multipart/form-data">
+                            <div class="drop-area" id="drop-area">
+                                <p>Drag & drop files here or click to select</p>
+                                <input
+                                    type="file"
+                                    id="file-input"
+                                    name="file"
+                                    accept="video/*"
+                                />
+                            </div>
+                            <div class="file-info hidden" id="file-info">
+                                <p id="selected-file">No file selected</p>
+                                <div
+                                    class="progress-container hidden"
+                                    id="progress-container"
+                                >
+                                    <div
+                                        class="progress-bar"
+                                        id="progress-bar"
+                                    ></div>
+                                </div>
+                            </div>
+                            <button type="submit" id="upload-button">
+                                Upload
+                            </button>
+                        </form>
+                        <div id="upload-message" class="message"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <script src="script.js"></script>
+    </body>
+</html>
