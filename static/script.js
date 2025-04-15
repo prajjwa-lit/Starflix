@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // DOM Elements
   const videoList = document.getElementById("video-list");
   const videoPlayer = document.getElementById("video-player");
   const player = document.getElementById("player");
@@ -17,15 +16,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const progressBar = document.getElementById("progress-bar");
   const uploadMessage = document.getElementById("upload-message");
   const dropArea = document.getElementById("drop-area");
-
-  // Tab switching
   videosTab.addEventListener("click", function () {
     videosTab.classList.add("active");
     uploadTab.classList.remove("active");
     videosPage.classList.add("active");
     uploadPage.classList.remove("active");
-
-    // Refresh video list when switching to videos tab
     loadVideos();
   });
 
@@ -35,16 +30,12 @@ document.addEventListener("DOMContentLoaded", function () {
     uploadPage.classList.add("active");
     videosPage.classList.remove("active");
   });
-
-  // Format file size
   function formatFileSize(bytes) {
     const sizes = ["B", "KB", "MB", "GB", "TB"];
     if (bytes === 0) return "0 B";
     const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
     return Math.round(bytes / Math.pow(1024, i), 2) + " " + sizes[i];
   }
-
-  // Load videos
   function loadVideos() {
     videoList.innerHTML = '<div class="loading">Loading videos...</div>';
 
@@ -76,15 +67,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     `;
 
           videoItem.addEventListener("click", () => {
-            // Show video player
             videoList.classList.add("hidden");
             videoPlayer.classList.remove("hidden");
-
-            // Set up video source
             player.src = `/videos/${encodeURIComponent(video.path)}`;
             videoTitle.textContent = video.name;
-
-            // Start playback
             player
               .play()
               .catch((err) => console.error("Playback failed:", err));
@@ -98,20 +84,13 @@ document.addEventListener("DOMContentLoaded", function () {
         videoList.innerHTML = `<div class="loading error">Error loading videos: ${error.message}</div>`;
       });
   }
-
-  // Handle back button
   backButton.addEventListener("click", () => {
-    // Stop playback and clear source
     player.pause();
     player.removeAttribute("src");
     player.load();
-
-    // Show video list, hide player
     videoPlayer.classList.add("hidden");
     videoList.classList.remove("hidden");
   });
-
-  // File selection
   fileInput.addEventListener("change", () => {
     const file = fileInput.files[0];
     if (file) {
@@ -121,8 +100,6 @@ document.addEventListener("DOMContentLoaded", function () {
       fileInfo.classList.add("hidden");
     }
   });
-
-  // Drag and drop functionality
   dropArea.addEventListener("dragover", (e) => {
     e.preventDefault();
     dropArea.classList.add("dragover");
@@ -147,8 +124,6 @@ document.addEventListener("DOMContentLoaded", function () {
   dropArea.addEventListener("click", () => {
     fileInput.click();
   });
-
-  // Form submission
   uploadForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -158,8 +133,6 @@ document.addEventListener("DOMContentLoaded", function () {
       uploadMessage.className = "message error";
       return;
     }
-
-    // Check if file is a video
     const videoTypes = [
       "video/mp4",
       "video/webm",
@@ -175,14 +148,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const formData = new FormData();
     formData.append("file", file);
-
-    // Reset UI
     uploadMessage.textContent = "";
     uploadMessage.className = "message";
     progressContainer.classList.remove("hidden");
     progressBar.style.width = "0%";
-
-    // Create and configure request
     const xhr = new XMLHttpRequest();
 
     xhr.open("POST", "/api/upload", true);
@@ -222,7 +191,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
     xhr.send(formData);
   });
-
-  // Initial load
   loadVideos();
 });

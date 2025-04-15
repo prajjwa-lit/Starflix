@@ -8,11 +8,8 @@ import (
 
 func CloudflareMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Allow larger uploads through Cloudflare
 		w.Header().Set("Transfer-Encoding", "chunked")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-
-		// Log Cloudflare headers for debugging
 		log.Printf("CF-RAY: %s", r.Header.Get("CF-RAY"))
 		log.Printf("CF-Connecting-IP: %s", r.Header.Get("CF-Connecting-IP"))
 		log.Printf("Content-Length: %s", r.Header.Get("Content-Length"))
@@ -46,33 +43,24 @@ func CORSMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// LoggingMiddleware logs HTTP requests
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-
-		// Wrap response writer to capture status code
 		lw := &loggingResponseWriter{
 			ResponseWriter: w,
 			statusCode:     http.StatusOK,
 		}
-
-		// Process the request
 		next.ServeHTTP(lw, r)
-
-		// Log request details
 		duration := time.Since(start)
 		log.Printf("%s %s %d %s", r.Method, r.URL.Path, lw.statusCode, duration)
 	})
 }
 
-// loggingResponseWriter is a wrapper for http.ResponseWriter that captures the status code
 type loggingResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
-// WriteHeader captures the status code
 func (lw *loggingResponseWriter) WriteHeader(code int) {
 	lw.statusCode = code
 	lw.ResponseWriter.WriteHeader(code)

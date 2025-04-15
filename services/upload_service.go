@@ -15,14 +15,12 @@ import (
 	"DevMaan707/streamer/utils"
 )
 
-// UploadService handles file uploading functionality
 type UploadService struct {
 	uploadDir     string
 	coverDir      string
 	maxUploadSize int64
 }
 
-// UploadMetadata contains metadata for an uploaded video
 type UploadMetadata struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
@@ -30,7 +28,6 @@ type UploadMetadata struct {
 	ReleaseYear int    `json:"release_year"`
 }
 
-// NewUploadService creates a new upload service
 func NewUploadService(uploadDir string, coverDir string, maxUploadSize int64) *UploadService {
 	return &UploadService{
 		uploadDir:     uploadDir,
@@ -39,18 +36,13 @@ func NewUploadService(uploadDir string, coverDir string, maxUploadSize int64) *U
 	}
 }
 func checkDirPermissions(dir string) error {
-	// Check if directory exists
 	info, err := os.Stat(dir)
 	if err != nil {
 		return fmt.Errorf("failed to stat directory: %w", err)
 	}
-
-	// Check if it's a directory
 	if !info.IsDir() {
 		return fmt.Errorf("%s is not a directory", dir)
 	}
-
-	// Try to create a test file
 	testFile := filepath.Join(dir, ".test_write_permission")
 	f, err := os.Create(testFile)
 	if err != nil {
@@ -64,36 +56,24 @@ func checkDirPermissions(dir string) error {
 
 func (s *UploadService) HandleUpload(r *http.Request) (string, error) {
 	log.Println("Starting file upload handling")
-
-	// Log request details
 	log.Printf("Content-Length: %d", r.ContentLength)
 	log.Printf("Transfer-Encoding: %v", r.TransferEncoding)
 	log.Printf("X-Forwarded-For: %v", r.Header.Get("X-Forwarded-For"))
-
-	// Use a larger parse size for Cloudflare
-	maxMemory := int64(32 << 20) // 32MB of memory for form parsing
+	maxMemory := int64(32 << 20)
 	if err := r.ParseMultipartForm(maxMemory); err != nil {
 		log.Printf("Failed to parse form: %v", err)
 		return "", fmt.Errorf("failed to parse form: %w", err)
 	}
-
-	// Get the file
 	file, header, err := r.FormFile("file")
 	if err != nil {
 		log.Printf("Failed to get file: %v", err)
 		return "", fmt.Errorf("failed to get file: %w", err)
 	}
 	defer file.Close()
-
-	// Log file details
 	log.Printf("Received file: %s, size: %d bytes", header.Filename, header.Size)
-
-	// Verify file size
 	if header.Size > s.maxUploadSize {
 		return "", fmt.Errorf("file too large (max %d bytes)", s.maxUploadSize)
 	}
-
-	// Verify file is a video
 	filename := header.Filename
 	if !utils.IsVideoFile(filename) {
 		return "", errors.New("only video files are allowed")
@@ -101,49 +81,36 @@ func (s *UploadService) HandleUpload(r *http.Request) (string, error) {
 
 	safeName := utils.SafeFilename(header.Filename)
 	filePath := filepath.Join(s.uploadDir, safeName)
-
-	// Create the file with explicit permissions
 	dst, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Printf("Failed to create file: %v", err)
 		return "", fmt.Errorf("failed to create file: %w", err)
 	}
 	defer dst.Close()
-
-	// Copy the file in chunks
 	written, err := io.Copy(dst, file)
 	if err != nil {
 		log.Printf("Failed to save file: %v", err)
-		os.Remove(filePath) // Clean up on error
+		os.Remove(filePath)
 		return "", fmt.Errorf("failed to save file: %w", err)
 	}
 
 	log.Printf("Successfully wrote %d bytes to %s", written, filePath)
-	// Now handle the metadata and cover image
 	title := r.FormValue("title")
 	if title == "" {
-		// Use filename without extension as default title
 		title = strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
 	}
 
 	description := r.FormValue("description")
 	genre := r.FormValue("genre")
-
-	// Try to parse release year
 	releaseYear := 0
 	if yearStr := r.FormValue("release_year"); yearStr != "" {
 		fmt.Sscanf(yearStr, "%d", &releaseYear)
 	}
-
-	// Handle cover image if provided
 	var coverPath string
 	coverFile, coverHeader, err := r.FormFile("cover_image")
 	if err == nil && coverFile != nil {
 		defer coverFile.Close()
-
-		// Verify it's an image file
 		if utils.IsImageFile(coverHeader.Filename) {
-			// Create a safe filename for the cover image
 			coverFilename := "cover_" + utils.SafeFilename(filename) + filepath.Ext(coverHeader.Filename)
 			coverFullPath := filepath.Join(s.coverDir, coverFilename)
 
@@ -161,8 +128,6 @@ func (s *UploadService) HandleUpload(r *http.Request) (string, error) {
 			}
 		}
 	}
-
-	// Store video metadata in the database
 	video := &db.Video{
 		Filename:    filepath.Base(safeName),
 		Title:       title,
@@ -177,32 +142,22 @@ func (s *UploadService) HandleUpload(r *http.Request) (string, error) {
 	err = db.InsertVideo(video)
 	if err != nil {
 		log.Printf("Warning: Failed to store video metadata: %v", err)
-		// We'll still return success since the file was uploaded
 	}
 
 	return safeName, nil
 }
-
-// SaveCoverImage saves a cover image file
 func (s *UploadService) SaveCoverImage(file multipart.File, header *multipart.FileHeader, baseName string) (string, error) {
-	// Verify file is an image
 	if !utils.IsImageFile(header.Filename) {
 		return "", errors.New("only image files are allowed for covers")
 	}
-
-	// Create safe filename for the cover image
 	ext := filepath.Ext(header.Filename)
 	safeName := "cover_" + utils.SafeFilename(baseName) + ext
 	filePath := filepath.Join(s.coverDir, safeName)
-
-	// Create destination file
 	dst, err := os.Create(filePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to create destination file: %w", err)
 	}
 	defer dst.Close()
-
-	// Copy the uploaded file to the destination file
 	_, err = io.Copy(dst, file)
 	if err != nil {
 		return "", fmt.Errorf("failed to save file: %w", err)

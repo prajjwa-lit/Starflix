@@ -15,16 +15,13 @@ import (
 //go:embed static/*
 var staticFiles embed.FS
 
-// Server represents the HTTP server
 type Server struct {
 	cfg       *config.Config
 	videoSvc  *services.VideoService
 	uploadSvc *services.UploadService
 }
 
-// NewServer creates a new server instance
 func NewServer(cfg *config.Config) (*Server, error) {
-	// Create services
 	videoSvc, err := services.NewVideoService(cfg.VideoDir, cfg.CoverImageDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create video service: %w", err)
@@ -40,34 +37,22 @@ func NewServer(cfg *config.Config) (*Server, error) {
 }
 
 func (s *Server) Start() error {
-	// Set up router with middlewares
 	mux := http.NewServeMux()
-
-	// Register API routes
 	api.RegisterRoutes(mux, s.videoSvc, s.uploadSvc)
-
-	// Set up static files
 	staticFS, err := fs.Sub(staticFiles, "static")
 	if err != nil {
 		return fmt.Errorf("failed to load static files: %w", err)
 	}
-
-	// Serve static files
 	mux.Handle("/", http.FileServer(http.FS(staticFS)))
-
-	// Apply middleware in correct order
-	// CORS middleware should be applied first
 	handler := CloudflareMiddleware(mux)
 	handler = ErrorLoggingMiddleware(handler)
 	handler = LoggingMiddleware(handler)
 	handler = CORSMiddleware(handler)
-
-	// Configure server with reasonable timeouts
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", s.cfg.Port),
 		Handler:      handler,
 		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 30 * time.Minute, // Long timeout for video uploads/streaming
+		WriteTimeout: 30 * time.Minute,
 		IdleTimeout:  120 * time.Second,
 	}
 

@@ -9,16 +9,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// DB connection variables
 var (
-	DB_HOST     = "100.110.169.82"
+	DB_HOST     = "localhost"
 	DB_PORT     = 5432
 	DB_NAME     = "streamflix"
-	DB_USER     = "devmaan"
-	DB_PASSWORD = "aymaan132"
+	DB_USER     = "xyz"
+	DB_PASSWORD = "xyz"
 )
 
-// Video represents a video with its metadata
 type Video struct {
 	ID          int       `json:"id"`
 	Filename    string    `json:"filename"`
@@ -34,16 +32,13 @@ type Video struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-// Genre represents a video genre
 type Genre struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
-// DB is the database client
 var DB *sql.DB
 
-// Initialize sets up the database connection
 func Initialize() error {
 	connStr := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable",
 		DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD)
@@ -54,12 +49,10 @@ func Initialize() error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Set connection pool settings
 	DB.SetMaxOpenConns(25)
 	DB.SetMaxIdleConns(5)
 	DB.SetConnMaxLifetime(5 * time.Minute)
 
-	// Test the connection
 	if err = DB.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
@@ -69,8 +62,6 @@ func Initialize() error {
 }
 func EnsureTablesExist() error {
 	log.Println("Checking and creating database tables if they don't exist...")
-
-	// Create videos table
 	_, err := DB.Exec(`
         CREATE TABLE IF NOT EXISTS videos (
             id SERIAL PRIMARY KEY,
@@ -91,7 +82,6 @@ func EnsureTablesExist() error {
 		return fmt.Errorf("failed to create videos table: %w", err)
 	}
 
-	// Create genres table
 	_, err = DB.Exec(`
         CREATE TABLE IF NOT EXISTS genres (
             id SERIAL PRIMARY KEY,
@@ -101,8 +91,6 @@ func EnsureTablesExist() error {
 	if err != nil {
 		return fmt.Errorf("failed to create genres table: %w", err)
 	}
-
-	// Insert some default genres if the table is empty
 	var count int
 	err = DB.QueryRow("SELECT COUNT(*) FROM genres").Scan(&count)
 	if err != nil {
@@ -131,8 +119,6 @@ func TestConnection() error {
 	if err := DB.Ping(); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
-
-	// Try a simple query
 	var count int
 	err := DB.QueryRow("SELECT COUNT(*) FROM videos").Scan(&count)
 	if err != nil {
@@ -143,7 +129,6 @@ func TestConnection() error {
 	return nil
 }
 
-// GetAllVideos returns all videos
 func GetAllVideos() ([]Video, error) {
 	log.Println("Attempting to query all videos from database...")
 
@@ -177,8 +162,6 @@ func GetAllVideos() ([]Video, error) {
 			log.Printf("Error scanning row: %v", err)
 			return nil, err
 		}
-
-		// Handle nullable fields
 		v.Description = description.String
 		v.Genre = genre.String
 		v.ReleaseYear = int(releaseYear.Int32)
@@ -198,8 +181,6 @@ func GetAllVideos() ([]Video, error) {
 	log.Printf("Found %d videos in database", len(videos))
 	return videos, nil
 }
-
-// GetVideosByGenre returns videos filtered by genre
 func GetVideosByGenre(genre string) ([]Video, error) {
 	query := `
 		SELECT id, filename, title, description, genre, release_year, cover_image_path,
@@ -228,7 +209,6 @@ func GetVideosByGenre(genre string) ([]Video, error) {
 			return nil, err
 		}
 
-		// Handle nullable fields
 		v.Description = description.String
 		v.Genre = genre.String
 		v.ReleaseYear = int(releaseYear.Int32)
@@ -246,8 +226,6 @@ func GetVideosByGenre(genre string) ([]Video, error) {
 
 	return videos, nil
 }
-
-// GetAllGenres returns all available genres
 func GetAllGenres() ([]Genre, error) {
 	query := `SELECT id, name FROM genres ORDER BY name`
 	rows, err := DB.Query(query)
@@ -272,7 +250,6 @@ func GetAllGenres() ([]Genre, error) {
 	return genres, nil
 }
 
-// InsertVideo adds a new video record to the database
 func InsertVideo(video *Video) error {
 	query := `
 		INSERT INTO videos
