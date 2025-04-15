@@ -144,7 +144,7 @@ var (
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/streamer.git
+git clone https://github.com/DevMaan707/streamer.git
 cd streamer
 ```
 
