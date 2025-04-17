@@ -1,6 +1,6 @@
-# StreamFlix - Personal Video Streaming Platform
+# StarFlix - Personal Video Streaming Platform
 
-StreamFlix is a self-hosted video streaming platform that allows you to manage and stream your personal video collection through a modern web interface. It features a Netflix-inspired UI, real-time video streaming, genre-based organization, and an intuitive upload system.
+StarFlix is a self-hosted video streaming platform that allows you to manage and stream your personal video collection through a modern web interface. It features a Netflix-inspired UI, real-time video streaming, genre-based organization, and an intuitive upload system.
 
 ## 🚀 Features
 
@@ -123,9 +123,9 @@ CREATE TABLE genres (
 
 1. **Database Setup**
 ```sql
-CREATE DATABASE streamflix;
+CREATE DATABASE starflix;
 CREATE USER xyz WITH PASSWORD 'xyz';
-GRANT ALL PRIVILEGES ON DATABASE streamflix TO xyz;
+GRANT ALL PRIVILEGES ON DATABASE starflix TO xyz;
 ```
 
 2. **Environment Configuration**
@@ -134,7 +134,7 @@ GRANT ALL PRIVILEGES ON DATABASE streamflix TO xyz;
 var (
     DB_HOST     = "localhost"
     DB_PORT     = 5432
-    DB_NAME     = "streamflix"
+    DB_NAME     = "starflix"
     DB_USER     = "xyz"
     DB_PASSWORD = "xyz"
 )
@@ -144,7 +144,7 @@ var (
 
 1. Clone the repository
 ```bash
-git clone https://github.com/DevMaan707/streamer.git
+git clone https://github.com/prajjwa-lit/Starflix.git
 cd streamer
 ```
 
